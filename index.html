@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Habit Tracker</title>
+    <title>Habit Tracker Pro</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -13,13 +13,25 @@
             <button id="darkModeToggle" class="dark-mode-btn">🌙</button>
         </header>
 
-        <!-- Form Tambah Habit -->
+        <!-- Form -->
         <form id="habitForm" class="habit-form">
-            <input type="text" id="habitInput" placeholder="Contoh: Olahraga, Baca buku, Minum air..." required>
-            <button type="submit">+ Tambah</button>
+            <input type="text" id="habitInput" placeholder="Nama habit..." required>
+            <div class="form-row">
+                <select id="habitColor">
+                    <option value="blue">Biru</option>
+                    <option value="green">Hijau</option>
+                    <option value="purple">Ungu</option>
+                    <option value="orange">Oranye</option>
+                    <option value="pink">Pink</option>
+                    <option value="teal">Teal</option>
+                </select>
+                <input type="number" id="habitTarget" placeholder="Target/minggu" min="1" max="7" value="7">
+            </div>
+            <button type="submit" id="submitBtn">+ Tambah Habit</button>
+            <button type="button" id="cancelEditBtn" class="cancel-btn hidden">Batal Edit</button>
         </form>
 
-        <!-- Statistik Singkat -->
+        <!-- Stats -->
         <div class="stats">
             <div class="stat-card">
                 <span class="stat-value" id="totalHabits">0</span>
@@ -29,14 +41,22 @@
                 <span class="stat-value" id="completedToday">0</span>
                 <span class="stat-label">Selesai Hari Ini</span>
             </div>
+            <div class="stat-card">
+                <span class="stat-value" id="bestStreak">0</span>
+                <span class="stat-label">Best Streak</span>
+            </div>
         </div>
 
-        <!-- Daftar Habit -->
-        <div id="habitsList" class="habits-list"></div>
+        <!-- Filter -->
+        <div class="filters">
+            <button class="filter-btn active" data-filter="all">Semua</button>
+            <button class="filter-btn" data-filter="active">Belum Selesai</button>
+            <button class="filter-btn" data-filter="completed">Selesai Hari Ini</button>
+        </div>
 
-        <p id="emptyMessage" class="empty-message">
-            Belum ada habit.<br>Yuk mulai bangun kebiasaan baik!
-        </p>
+        <!-- List -->
+        <div id="habitsList" class="habits-list"></div>
+        <p id="emptyMessage" class="empty-message">Belum ada habit.<br>Yuk mulai bangun kebiasaan baik!</p>
     </div>
 
     <script src="script.js"></script>
