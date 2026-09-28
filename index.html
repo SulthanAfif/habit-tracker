@@ -3,19 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Habit Tracker Pro</title>
+    <title>Habit Tracker</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
+    <div class="app">
         <header>
             <h1>Habit Tracker</h1>
-            <button id="darkModeToggle" class="dark-mode-btn">🌙</button>
+            <div class="header-right">
+                <button id="exportBtn" title="Export">📥</button>
+                <button id="importBtn" title="Import">📤</button>
+                <input type="file" id="importFile" accept=".json" hidden>
+                <button id="darkModeToggle">🌙</button>
+            </div>
         </header>
 
+        <div class="quote" id="quote">"Konsistensi mengalahkan intensitas."</div>
+
         <!-- Form -->
-        <form id="habitForm" class="habit-form">
-            <input type="text" id="habitInput" placeholder="Nama habit..." required>
+        <form id="habitForm">
+            <input type="text" id="habitName" placeholder="Nama habit..." required>
             <div class="form-row">
                 <select id="habitColor">
                     <option value="blue">Biru</option>
@@ -25,38 +32,53 @@
                     <option value="pink">Pink</option>
                     <option value="teal">Teal</option>
                 </select>
-                <input type="number" id="habitTarget" placeholder="Target/minggu" min="1" max="7" value="7">
+                <input type="number" id="habitTarget" min="1" max="7" value="7" title="Target per minggu">
             </div>
             <button type="submit" id="submitBtn">+ Tambah Habit</button>
-            <button type="button" id="cancelEditBtn" class="cancel-btn hidden">Batal Edit</button>
+            <button type="button" id="cancelBtn" class="hidden">Batal</button>
         </form>
 
         <!-- Stats -->
         <div class="stats">
-            <div class="stat-card">
-                <span class="stat-value" id="totalHabits">0</span>
-                <span class="stat-label">Total Habit</span>
+            <div class="stat">
+                <div class="num" id="statTotal">0</div>
+                <div class="label">Total</div>
             </div>
-            <div class="stat-card">
-                <span class="stat-value" id="completedToday">0</span>
-                <span class="stat-label">Selesai Hari Ini</span>
+            <div class="stat">
+                <div class="num" id="statToday">0</div>
+                <div class="label">Hari Ini</div>
             </div>
-            <div class="stat-card">
-                <span class="stat-value" id="bestStreak">0</span>
-                <span class="stat-label">Best Streak</span>
+            <div class="stat">
+                <div class="num" id="statBest">0</div>
+                <div class="label">Best Streak</div>
             </div>
         </div>
 
         <!-- Filter -->
         <div class="filters">
-            <button class="filter-btn active" data-filter="all">Semua</button>
-            <button class="filter-btn" data-filter="active">Belum Selesai</button>
-            <button class="filter-btn" data-filter="completed">Selesai Hari Ini</button>
+            <button class="filter active" data-filter="all">Semua</button>
+            <button class="filter" data-filter="active">Belum</button>
+            <button class="filter" data-filter="done">Selesai</button>
         </div>
 
         <!-- List -->
-        <div id="habitsList" class="habits-list"></div>
-        <p id="emptyMessage" class="empty-message">Belum ada habit.<br>Yuk mulai bangun kebiasaan baik!</p>
+        <div id="list"></div>
+        <div id="empty" class="empty">Belum ada habit.<br>Yuk mulai!</div>
+
+        <button id="resetBtn" class="reset">Reset Semua Data</button>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal hidden">
+        <div class="modal-box">
+            <h3 id="modalTitle">Catatan</h3>
+            <p id="modalDate" class="modal-date"></p>
+            <textarea id="modalNote" placeholder="Tulis catatan (opsional)..."></textarea>
+            <div class="modal-btns">
+                <button id="modalSave">Simpan</button>
+                <button id="modalCancel">Batal</button>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
