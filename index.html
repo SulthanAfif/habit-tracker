@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Habit Tracker</h1>
+            <button id="darkModeToggle" class="dark-mode-btn">🌙</button>
+        </header>
+
+        <!-- Form Tambah Habit -->
+        <form id="habitForm" class="habit-form">
+            <input type="text" id="habitInput" placeholder="Contoh: Olahraga, Baca buku, Minum air..." required>
+            <button type="submit">+ Tambah</button>
+        </form>
+
+        <!-- Statistik Singkat -->
+        <div class="stats">
+            <div class="stat-card">
+                <span class="stat-value" id="totalHabits">0</span>
+                <span class="stat-label">Total Habit</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" id="completedToday">0</span>
+                <span class="stat-label">Selesai Hari Ini</span>
+            </div>
+        </div>
+
+        <!-- Daftar Habit -->
+        <div id="habitsList" class="habits-list"></div>
+
+        <p id="emptyMessage" class="empty-message">
+            Belum ada habit.<br>Yuk mulai bangun kebiasaan baik!
+        </p>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
