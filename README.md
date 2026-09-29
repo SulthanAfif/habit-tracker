@@ -1,5 +1,8 @@
 # Belajar Frontend Development
 
+## Live Demo
+https://habit-tracker-lac-psi-10.vercel.app/
+
 # Habit Tracker Pro
 
 Aplikasi pelacak kebiasaan harian yang lengkap dan modern.  
