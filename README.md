@@ -1,70 +1,79 @@
+# Belajar Frontend Development
+
 # Habit Tracker Pro
 
-Aplikasi pelacak kebiasaan harian yang lengkap dan modern. Dibuat sepenuhnya dengan **Vanilla HTML, CSS, dan JavaScript** (tanpa framework).
+Aplikasi pelacak kebiasaan harian yang lengkap dan modern.  
+Dibuat sepenuhnya dengan **Vanilla HTML, CSS, dan JavaScript** (tanpa framework).
 
-Project ini cocok untuk portfolio karena sudah mencakup banyak fitur advanced seperti streak, progress mingguan, catatan harian, export/import data, dan dark mode.
+Project ini cocok untuk portfolio karena sudah mencakup banyak fitur advanced.
 
 ---
 
 ## Fitur Lengkap
 
 ### Manajemen Habit
-- Tambah, **edit**, dan hapus habit
+
+- Tambah, edit, dan hapus habit
 - Pilih **warna** habit
-- Tentukan **target mingguan** (1–7 kali per minggu)
-- Tandai selesai per hari (kalender 7 hari terakhir)
+- Pilih **kategori** (Kesehatan, Produktivitas, Belajar, Keuangan, Lainnya)
+- Tentukan **target mingguan** (1–7x per minggu)
+- **Mode Tantangan 30 Hari**
 
-### Tracking & Statistik
-- **Streak** saat ini
-- **Best Streak** (rekor terbaik)
+### Tracking
+
+- Tandai selesai per hari (kalender 7 hari)
+- **Streak** saat ini & **Best Streak**
 - Progress bar mingguan
-- Statistik: Total Habit, Selesai Hari Ini, Best Streak
-- Filter: Semua / Belum Selesai / Selesai Hari Ini
+- Catatan harian (opsional saat menandai selesai)
 
-### Catatan Harian
-- Saat menandai hari selesai, bisa menambahkan **catatan** (opsional)
-- Catatan tersimpan dan bisa dilihat kembali
+### Tampilan
 
-### Data Management
-- **Export** data ke file JSON
-- **Import** data dari file JSON
-- **Reset** semua data
-- Data tersimpan otomatis di `localStorage`
+- **Daftar Habit** (view utama)
+- **Kalender Bulanan Penuh** (lihat progress sebulan)
+- **Grafik Progress** 30 hari terakhir (Chart.js)
+- Filter: Semua / Belum Selesai / Selesai Hari Ini / Tantangan
 
-### Lainnya
-- Quote motivasi harian (berubah setiap refresh)
+### Data & Lainnya
+
+- Export & Import data (JSON)
+- Reset semua data
+- **Notifikasi browser** (pengingat harian)
+- Quote motivasi harian
 - Dark Mode
-- Fully Responsive (HP, Tablet, Desktop)
-- Animasi halus
+- Fully Responsive
 
 ---
 
 ## Tech Stack
 
 - HTML5
-- CSS3 (CSS Variables + Dark Mode + Media Queries)
+- CSS3 (CSS Variables + Dark Mode + Responsive)
 - JavaScript (Vanilla)
+- Chart.js (untuk grafik)
 - localStorage
+- Notification API
 
 ---
 
 ## Cara Menjalankan
 
-1. Clone repository ini:
+1. Clone repository:
    ```bash
-   git clone https://github.com/SulthanAfif/habit-tracker.git
+   git clone https://github.com/USERNAME_KAMU/habit-tracker.git
+   ```
 
 # Cara Menggunakan
 
-1. Isi nama habit, pilih warna, dan tentukan target mingguan
-2. Klik + Tambah Habit
-3. Klik kotak hari untuk menandai selesai (bisa diisi catatan)
-4. Lihat streak dan progress bar secara real-time
-5. Gunakan filter untuk melihat habit yang sudah/belum selesai
-6. Klik ikon 📥 untuk export data, 📤 untuk import
-7. Klik ikon bulan/matahari untuk Dark Mode
+1. Isi nama habit, pilih kategori, warna, dan target mingguan
+2. Centang Mode Tantangan 30 Hari jika ingin challenge
+3. Klik + Tambah Habit
+4. Klik kotak hari untuk menandai selesai (bisa isi catatan)
+5. Gunakan tab Kalender Bulanan dan Grafik Progress
+6. Aktifkan notifikasi dengan tombol 🔔
+7. Export/Import data lewat tombol 📥 📤
 
 ## Struktur File
+
 ```
 habit-tracker/
 ├── index.html      # Struktur halaman
@@ -73,3 +82,9 @@ habit-tracker/
 └── README.md       # Dokumentasi
 ```
 
+# Pengembangan Selanjutnya (Ide)
+
+- Reminder berbasis waktu tertentu
+- Multiple device sync (butuh backend)
+- Statistik lebih detail per kategori
+- Mode gelap otomatis mengikuti sistem
