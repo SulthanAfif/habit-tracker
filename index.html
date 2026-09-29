@@ -1,86 +1,167 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Habit Tracker</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Habit Tracker Pro</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
     <div class="app">
-        <header>
-            <h1>Habit Tracker</h1>
-            <div class="header-right">
-                <button id="exportBtn" title="Export">📥</button>
-                <button id="importBtn" title="Import">📤</button>
-                <input type="file" id="importFile" accept=".json" hidden>
-                <button id="darkModeToggle">🌙</button>
-            </div>
-        </header>
+      <!-- HEADER -->
+      <header class="header">
+        <h1>Habit Tracker</h1>
+        <div class="header-actions">
+          <button id="exportBtn" class="icon-btn" title="Export">📥</button>
+          <button id="importBtn" class="icon-btn" title="Import">📤</button>
+          <input type="file" id="importFile" accept=".json" hidden />
+          <button id="notifBtn" class="icon-btn" title="Aktifkan Notifikasi">
+            🔔
+          </button>
+          <button id="darkModeToggle" class="icon-btn">🌙</button>
+        </div>
+      </header>
 
-        <div class="quote" id="quote">"Konsistensi mengalahkan intensitas."</div>
+      <!-- QUOTE -->
+      <div class="quote" id="dailyQuote">
+        "Konsistensi mengalahkan intensitas."
+      </div>
 
-        <!-- Form -->
-        <form id="habitForm">
-            <input type="text" id="habitName" placeholder="Nama habit..." required>
-            <div class="form-row">
-                <select id="habitColor">
-                    <option value="blue">Biru</option>
-                    <option value="green">Hijau</option>
-                    <option value="purple">Ungu</option>
-                    <option value="orange">Oranye</option>
-                    <option value="pink">Pink</option>
-                    <option value="teal">Teal</option>
-                </select>
-                <input type="number" id="habitTarget" min="1" max="7" value="7" title="Target per minggu">
-            </div>
-            <button type="submit" id="submitBtn">+ Tambah Habit</button>
-            <button type="button" id="cancelBtn" class="hidden">Batal</button>
-        </form>
+      <!-- FORM -->
+      <form id="habitForm" class="form-card">
+        <input
+          type="text"
+          id="habitInput"
+          placeholder="Nama habit..."
+          required
+        />
 
-        <!-- Stats -->
-        <div class="stats">
-            <div class="stat">
-                <div class="num" id="statTotal">0</div>
-                <div class="label">Total</div>
-            </div>
-            <div class="stat">
-                <div class="num" id="statToday">0</div>
-                <div class="label">Hari Ini</div>
-            </div>
-            <div class="stat">
-                <div class="num" id="statBest">0</div>
-                <div class="label">Best Streak</div>
-            </div>
+        <div class="form-grid">
+          <select id="habitCategory">
+            <option value="Kesehatan">Kesehatan</option>
+            <option value="Produktivitas">Produktivitas</option>
+            <option value="Belajar">Belajar</option>
+            <option value="Keuangan">Keuangan</option>
+            <option value="Lainnya">Lainnya</option>
+          </select>
+
+          <select id="habitColor">
+            <option value="blue">Biru</option>
+            <option value="green">Hijau</option>
+            <option value="purple">Ungu</option>
+            <option value="orange">Oranye</option>
+            <option value="pink">Pink</option>
+            <option value="teal">Teal</option>
+          </select>
+
+          <input
+            type="number"
+            id="habitTarget"
+            min="1"
+            max="7"
+            value="7"
+            title="Target per minggu"
+          />
         </div>
 
-        <!-- Filter -->
-        <div class="filters">
-            <button class="filter active" data-filter="all">Semua</button>
-            <button class="filter" data-filter="active">Belum</button>
-            <button class="filter" data-filter="done">Selesai</button>
+        <label class="challenge-label">
+          <input type="checkbox" id="habitChallenge" />
+          Mode Tantangan 30 Hari
+        </label>
+
+        <div class="form-actions">
+          <button type="submit" id="submitBtn" class="btn primary">
+            + Tambah Habit
+          </button>
+          <button type="button" id="cancelEditBtn" class="btn secondary hidden">
+            Batal
+          </button>
         </div>
+      </form>
 
-        <!-- List -->
-        <div id="list"></div>
-        <div id="empty" class="empty">Belum ada habit.<br>Yuk mulai!</div>
+      <!-- STATS -->
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-value" id="totalHabits">0</div>
+          <div class="stat-label">Total Habit</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="completedToday">0</div>
+          <div class="stat-label">Selesai Hari Ini</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="bestStreak">0</div>
+          <div class="stat-label">Best Streak</div>
+        </div>
+      </div>
 
-        <button id="resetBtn" class="reset">Reset Semua Data</button>
+      <!-- FILTER -->
+      <div class="filters">
+        <button class="filter-btn active" data-filter="all">Semua</button>
+        <button class="filter-btn" data-filter="active">Belum Selesai</button>
+        <button class="filter-btn" data-filter="completed">
+          Selesai Hari Ini
+        </button>
+        <button class="filter-btn" data-filter="challenge">Tantangan</button>
+      </div>
+
+      <!-- TABS -->
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="list">Daftar Habit</button>
+        <button class="tab-btn" data-tab="calendar">Kalender Bulanan</button>
+        <button class="tab-btn" data-tab="chart">Grafik Progress</button>
+      </div>
+
+      <!-- LIST VIEW -->
+      <div id="listView" class="tab-content">
+        <div id="habitsList" class="habits-list"></div>
+        <p id="emptyMessage" class="empty">
+          Belum ada habit.<br />Yuk mulai bangun kebiasaan baik!
+        </p>
+      </div>
+
+      <!-- CALENDAR VIEW -->
+      <div id="calendarView" class="tab-content hidden">
+        <div class="calendar-header">
+          <button id="prevMonth" class="nav-btn">‹</button>
+          <h2 id="currentMonthLabel">Bulan</h2>
+          <button id="nextMonth" class="nav-btn">›</button>
+        </div>
+        <div class="calendar-weekdays">
+          <span>Min</span><span>Sen</span><span>Sel</span><span>Rab</span>
+          <span>Kam</span><span>Jum</span><span>Sab</span>
+        </div>
+        <div id="monthGrid" class="month-grid"></div>
+      </div>
+
+      <!-- CHART VIEW -->
+      <div id="chartView" class="tab-content hidden">
+        <canvas id="progressChart" height="220"></canvas>
+      </div>
+
+      <div class="footer">
+        <button id="resetBtn" class="reset-btn">Reset Semua Data</button>
+      </div>
     </div>
 
-    <!-- Modal -->
-    <div id="modal" class="modal hidden">
-        <div class="modal-box">
-            <h3 id="modalTitle">Catatan</h3>
-            <p id="modalDate" class="modal-date"></p>
-            <textarea id="modalNote" placeholder="Tulis catatan (opsional)..."></textarea>
-            <div class="modal-btns">
-                <button id="modalSave">Simpan</button>
-                <button id="modalCancel">Batal</button>
-            </div>
+    <!-- MODAL CATATAN -->
+    <div id="noteModal" class="modal hidden">
+      <div class="modal-box">
+        <h3>Catatan untuk <span id="modalHabitName"></span></h3>
+        <p class="modal-date" id="modalDate"></p>
+        <textarea
+          id="noteInput"
+          rows="4"
+          placeholder="Tulis catatan (opsional)..."
+        ></textarea>
+        <div class="modal-actions">
+          <button id="saveNoteBtn" class="btn primary">Simpan & Selesai</button>
+          <button id="cancelNoteBtn" class="btn secondary">Batal</button>
         </div>
+      </div>
     </div>
 
     <script src="script.js"></script>
-</body>
+  </body>
 </html>

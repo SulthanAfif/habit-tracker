@@ -1,278 +1,518 @@
-// Dark Mode
-const darkBtn = document.getElementById("darkModeToggle");
-if (localStorage.getItem("dark") === "1") {
-    document.body.classList.add("dark");
-    darkBtn.textContent = "☀️";
+// ===================== DARK MODE =====================
+const darkModeToggle = document.getElementById("darkModeToggle");
+if (localStorage.getItem("darkMode") === "enabled") {
+  document.body.classList.add("dark-mode");
+  darkModeToggle.textContent = "☀️";
 }
-darkBtn.onclick = () => {
-    document.body.classList.toggle("dark");
-    const isDark = document.body.classList.contains("dark");
-    darkBtn.textContent = isDark ? "☀️" : "🌙";
-    localStorage.setItem("dark", isDark ? "1" : "0");
-};
+darkModeToggle.addEventListener("click", () => {
+  document.body.classList.toggle("dark-mode");
+  const isDark = document.body.classList.contains("dark-mode");
+  darkModeToggle.textContent = isDark ? "☀️" : "🌙";
+  localStorage.setItem("darkMode", isDark ? "enabled" : "disabled");
+});
 
-// Quote
+// ===================== QUOTE =====================
 const quotes = [
-    "Konsistensi mengalahkan intensitas.",
-    "Sedikit kemajuan setiap hari menambah hasil besar.",
-    "Jangan tunggu motivasi, ciptakan disiplin.",
-    "Hari ini adalah kesempatan untuk menjadi lebih baik."
+  "Konsistensi mengalahkan intensitas.",
+  "Sedikit kemajuan setiap hari menambah hasil besar.",
+  "Kebiasaan baik adalah bunga yang mekar perlahan.",
+  "Jangan tunggu motivasi, ciptakan disiplin.",
+  "Hari ini adalah kesempatan untuk menjadi lebih baik.",
+  "Streak kecil yang konsisten lebih berharga dari usaha besar yang jarang.",
 ];
-document.getElementById("quote").textContent = `"${quotes[Math.floor(Math.random() * quotes.length)]}"`;
+document.getElementById("dailyQuote").textContent =
+  `"${quotes[Math.floor(Math.random() * quotes.length)]}"`;
 
-// State
-let habits = JSON.parse(localStorage.getItem("habits") || "[]");
-let editId = null;
-let filter = "all";
-let pending = null;
+// ===================== STATE =====================
+let habits = JSON.parse(localStorage.getItem("habits")) || [];
+let editIndex = null;
+let currentFilter = "all";
+let currentTab = "list";
+let currentMonth = new Date();
+let pendingComplete = null;
+let progressChart = null;
 
-// Helpers
-const today = () => new Date().toISOString().slice(0, 10);
-
-function last7() {
-    const arr = [];
-    for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        arr.push({
-            date: d.toISOString().slice(0, 10),
-            label: d.toLocaleDateString("id-ID", { weekday: "short" }),
-            isToday: i === 0
-        });
-    }
-    return arr;
-}
-
-function streak(dates) {
-    if (!dates.length) return 0;
-    const set = new Set(dates);
-    let s = 0;
-    let d = new Date();
-    if (!set.has(today())) d.setDate(d.getDate() - 1);
-    while (set.has(d.toISOString().slice(0, 10))) {
-        s++;
-        d.setDate(d.getDate() - 1);
-    }
-    return s;
-}
-
-function weekCount(dates) {
-    const start = new Date();
-    start.setDate(start.getDate() - start.getDay());
-    start.setHours(0, 0, 0, 0);
-    return dates.filter(d => new Date(d) >= start).length;
+// ===================== HELPERS =====================
+function getDateString(d = new Date()) {
+  return d.toISOString().split("T")[0];
 }
 
 function save() {
-    localStorage.setItem("habits", JSON.stringify(habits));
+  localStorage.setItem("habits", JSON.stringify(habits));
 }
 
-function color(c) {
-    return { blue: "#0ea5e9", green: "#22c55e", purple: "#a855f7", orange: "#f97316", pink: "#ec4899", teal: "#14b8a6" }[c] || "#0ea5e9";
+function calculateStreak(dates) {
+  if (!dates.length) return 0;
+  const sorted = [...dates].sort().reverse();
+  let streak = 0;
+  let cur = new Date();
+  if (!sorted.includes(getDateString(cur))) cur.setDate(cur.getDate() - 1);
+  while (sorted.includes(getDateString(cur))) {
+    streak++;
+    cur.setDate(cur.getDate() - 1);
+  }
+  return streak;
 }
 
-// Render
-function render() {
-    const list = document.getElementById("list");
-    const empty = document.getElementById("empty");
-    list.innerHTML = "";
+function getWeekCount(dates) {
+  const now = new Date();
+  const start = new Date(now);
+  start.setDate(now.getDate() - now.getDay());
+  start.setHours(0, 0, 0, 0);
+  return dates.filter((d) => new Date(d) >= start).length;
+}
 
-    let data = [...habits];
-    if (filter === "active") data = data.filter(h => !h.dates.includes(today()));
-    if (filter === "done") data = data.filter(h => h.dates.includes(today()));
+function getColor(c) {
+  const map = {
+    blue: "#0ea5e9",
+    green: "#22c55e",
+    purple: "#a855f7",
+    orange: "#f97316",
+    pink: "#ec4899",
+    teal: "#14b8a6",
+  };
+  return map[c] || "#0ea5e9";
+}
 
-    document.getElementById("statTotal").textContent = habits.length;
-    document.getElementById("statToday").textContent = habits.filter(h => h.dates.includes(today())).length;
-    document.getElementById("statBest").textContent = Math.max(0, ...habits.map(h => streak(h.dates)));
-
-    if (!data.length) {
-        empty.classList.remove("hidden");
-        return;
-    }
-    empty.classList.add("hidden");
-
-    const days = last7();
-
-    data.forEach((h, i) => {
-        const realIndex = habits.indexOf(h);
-        const s = streak(h.dates);
-        const wc = weekCount(h.dates);
-        const target = h.target || 7;
-        const pct = Math.min(100, Math.round(wc / target * 100));
-
-        const el = document.createElement("div");
-        el.className = `habit ${h.color || "blue"}`;
-        el.innerHTML = `
-            <div class="habit-top">
-                <h3>${h.name}</h3>
-                <div>
-                    <button data-edit="${realIndex}">✎</button>
-                    <button data-del="${realIndex}">×</button>
-                </div>
-            </div>
-            <div class="meta">
-                <span>Streak: <strong>${s}</strong></span>
-                <span>Minggu: <strong>${wc}/${target}</strong></span>
-            </div>
-            <div class="progress-label">
-                <span>Progress</span>
-                <span>${pct}%</span>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill" style="width:${pct}%;background:${color(h.color)}"></div>
-            </div>
-            <div class="days">
-                ${days.map(d => `
-                    <div class="day">
-                        <span>${d.label}</span>
-                        <button class="${h.dates.includes(d.date) ? "done" : ""} ${d.isToday ? "today" : ""}"
-                            data-toggle="${realIndex}" data-date="${d.date}">
-                            ${h.dates.includes(d.date) ? "✓" : ""}
-                        </button>
-                    </div>
-                `).join("")}
-            </div>
-            ${h.notes && h.notes[today()] ? `<div class="note">📝 ${h.notes[today()]}</div>` : ""}
-        `;
-        list.appendChild(el);
+function getLast7Days() {
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    days.push({
+      date: getDateString(d),
+      label: d.toLocaleDateString("id-ID", { weekday: "short" }),
+      isToday: i === 0,
     });
+  }
+  return days;
 }
 
-// Events
-document.getElementById("habitForm").onsubmit = e => {
-    e.preventDefault();
-    const name = document.getElementById("habitName").value.trim();
-    if (!name) return;
+// ===================== RENDER LIST =====================
+function updateStats() {
+  document.getElementById("totalHabits").textContent = habits.length;
+  const today = getDateString();
+  document.getElementById("completedToday").textContent = habits.filter((h) =>
+    h.completedDates.includes(today),
+  ).length;
 
-    const colorVal = document.getElementById("habitColor").value;
-    const target = +document.getElementById("habitTarget").value || 7;
+  let best = 0;
+  habits.forEach((h) => {
+    const s = calculateStreak(h.completedDates);
+    if (s > best) best = s;
+    if (!h.bestStreak || s > h.bestStreak) h.bestStreak = s;
+  });
+  document.getElementById("bestStreak").textContent = best;
+  save();
+}
 
-    if (editId !== null) {
-        habits[editId].name = name;
-        habits[editId].color = colorVal;
-        habits[editId].target = target;
-        editId = null;
-        document.getElementById("submitBtn").textContent = "+ Tambah Habit";
-        document.getElementById("cancelBtn").classList.add("hidden");
-    } else {
-        habits.push({ name, color: colorVal, target, dates: [], notes: {} });
-    }
-    save();
-    render();
-    e.target.reset();
-    document.getElementById("habitTarget").value = 7;
-};
+function renderList() {
+  const list = document.getElementById("habitsList");
+  const empty = document.getElementById("emptyMessage");
+  const today = getDateString();
+  const last7 = getLast7Days();
 
-document.getElementById("cancelBtn").onclick = () => {
-    editId = null;
-    document.getElementById("habitForm").reset();
-    document.getElementById("habitTarget").value = 7;
+  let filtered = [...habits];
+  if (currentFilter === "active")
+    filtered = habits.filter((h) => !h.completedDates.includes(today));
+  if (currentFilter === "completed")
+    filtered = habits.filter((h) => h.completedDates.includes(today));
+  if (currentFilter === "challenge")
+    filtered = habits.filter((h) => h.challenge);
+
+  list.innerHTML = "";
+  if (filtered.length === 0) {
+    empty.classList.remove("hidden");
+    updateStats();
+    return;
+  }
+  empty.classList.add("hidden");
+
+  filtered.forEach((habit) => {
+    const idx = habits.indexOf(habit);
+    const streak = calculateStreak(habit.completedDates);
+    const week = getWeekCount(habit.completedDates);
+    const target = habit.target || 7;
+    const progress = Math.min((week / target) * 100, 100);
+
+    const card = document.createElement("div");
+    card.className = `habit-card ${habit.color || "blue"}`;
+
+    const daysHtml = last7
+      .map(
+        (d) => `
+      <div class="day">
+        <div class="day-label">${d.label}</div>
+        <button class="day-btn ${habit.completedDates.includes(d.date) ? "completed" : ""} ${d.isToday ? "today" : ""}"
+          data-index="${idx}" data-date="${d.date}">
+          ${habit.completedDates.includes(d.date) ? "✓" : ""}
+        </button>
+      </div>
+    `,
+      )
+      .join("");
+
+    const note = habit.notes?.[today]
+      ? `<div style="font-size:0.8rem;color:var(--muted);margin-top:0.5rem;font-style:italic">📝 ${habit.notes[today]}</div>`
+      : "";
+
+    card.innerHTML = `
+      <div class="habit-header">
+        <div>
+          <div class="habit-name">${habit.name}</div>
+          <div style="margin-top:0.25rem">
+            <span class="badge">${habit.category || "Lainnya"}</span>
+            ${habit.challenge ? '<span class="badge challenge">30 Hari</span>' : ""}
+          </div>
+        </div>
+        <div class="habit-actions">
+          <button class="edit-btn" data-index="${idx}">✎</button>
+          <button class="delete-btn" data-index="${idx}">×</button>
+        </div>
+      </div>
+      <div class="habit-meta">
+        <span>Streak: <strong>${streak}</strong></span>
+        <span>Best: <strong>${habit.bestStreak || streak}</strong></span>
+        <span>Minggu: <strong>${week}/${target}</strong></span>
+      </div>
+      <div class="progress-section">
+        <div class="progress-info">
+          <span>Progress Mingguan</span>
+          <span>${Math.round(progress)}%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${progress}%;background:${getColor(habit.color)}"></div>
+        </div>
+      </div>
+      <div class="calendar-week">${daysHtml}</div>
+      ${note}
+    `;
+    list.appendChild(card);
+  });
+  updateStats();
+}
+
+// ===================== MONTHLY CALENDAR =====================
+function renderMonthCalendar() {
+  const label = document.getElementById("currentMonthLabel");
+  const grid = document.getElementById("monthGrid");
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth();
+
+  label.textContent = currentMonth.toLocaleDateString("id-ID", {
+    month: "long",
+    year: "numeric",
+  });
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayStr = getDateString();
+
+  grid.innerHTML = "";
+
+  // Empty cells
+  for (let i = 0; i < firstDay; i++) {
+    const cell = document.createElement("div");
+    cell.className = "month-day other";
+    grid.appendChild(cell);
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const cell = document.createElement("div");
+    cell.className = "month-day" + (dateStr === todayStr ? " today" : "");
+
+    // Count completions on this day
+    const count = habits.filter((h) =>
+      h.completedDates.includes(dateStr),
+    ).length;
+    const dots =
+      count > 0
+        ? `<div class="dots">${"<div class='dot'></div>".repeat(Math.min(count, 3))}</div>`
+        : "";
+
+    cell.innerHTML = `<span>${d}</span>${dots}`;
+    grid.appendChild(cell);
+  }
+}
+
+// ===================== CHART =====================
+function renderChart() {
+  const ctx = document.getElementById("progressChart").getContext("2d");
+  if (progressChart) progressChart.destroy();
+
+  // Last 30 days
+  const labels = [];
+  const data = [];
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = getDateString(d);
+    labels.push(d.getDate());
+    const count = habits.filter((h) =>
+      h.completedDates.includes(dateStr),
+    ).length;
+    data.push(count);
+  }
+
+  progressChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Habit Selesai",
+          data,
+          backgroundColor: "#0ea5e9",
+          borderRadius: 4,
+        },
+      ],
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+      },
+    },
+  });
+}
+
+// ===================== EVENTS =====================
+document.getElementById("habitForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const name = document.getElementById("habitInput").value.trim();
+  if (!name) return;
+
+  const data = {
+    name,
+    category: document.getElementById("habitCategory").value,
+    color: document.getElementById("habitColor").value,
+    target: Number(document.getElementById("habitTarget").value) || 7,
+    challenge: document.getElementById("habitChallenge").checked,
+    completedDates: [],
+    notes: {},
+    bestStreak: 0,
+    createdAt: getDateString(),
+  };
+
+  if (editIndex !== null) {
+    habits[editIndex] = { ...habits[editIndex], ...data };
+    editIndex = null;
     document.getElementById("submitBtn").textContent = "+ Tambah Habit";
-    document.getElementById("cancelBtn").classList.add("hidden");
-};
+    document.getElementById("cancelEditBtn").classList.add("hidden");
+  } else {
+    habits.push(data);
+  }
 
-document.getElementById("list").onclick = e => {
-    const edit = e.target.dataset.edit;
-    const del = e.target.dataset.del;
-    const toggle = e.target.dataset.toggle;
-    const date = e.target.dataset.date;
-
-    if (edit !== undefined) {
-        const h = habits[edit];
-        document.getElementById("habitName").value = h.name;
-        document.getElementById("habitColor").value = h.color || "blue";
-        document.getElementById("habitTarget").value = h.target || 7;
-        editId = +edit;
-        document.getElementById("submitBtn").textContent = "Simpan";
-        document.getElementById("cancelBtn").classList.remove("hidden");
-        window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-
-    if (del !== undefined) {
-        if (confirm("Hapus habit ini?")) {
-            habits.splice(del, 1);
-            save();
-            render();
-        }
-    }
-
-    if (toggle !== undefined) {
-        const h = habits[toggle];
-        if (h.dates.includes(date)) {
-            h.dates = h.dates.filter(d => d !== date);
-            if (h.notes) delete h.notes[date];
-            save();
-            render();
-        } else {
-            pending = { index: +toggle, date };
-            document.getElementById("modalTitle").textContent = h.name;
-            document.getElementById("modalDate").textContent = new Date(date + "T00:00:00").toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long" });
-            document.getElementById("modalNote").value = (h.notes && h.notes[date]) || "";
-            document.getElementById("modal").classList.remove("hidden");
-        }
-    }
-};
-
-document.getElementById("modalSave").onclick = () => {
-    if (!pending) return;
-    const h = habits[pending.index];
-    if (!h.dates.includes(pending.date)) h.dates.push(pending.date);
-    if (!h.notes) h.notes = {};
-    const note = document.getElementById("modalNote").value.trim();
-    if (note) h.notes[pending.date] = note;
-    else delete h.notes[pending.date];
-    save();
-    render();
-    document.getElementById("modal").classList.add("hidden");
-    pending = null;
-};
-
-document.getElementById("modalCancel").onclick = () => {
-    document.getElementById("modal").classList.add("hidden");
-    pending = null;
-};
-
-document.querySelectorAll(".filter").forEach(btn => {
-    btn.onclick = () => {
-        document.querySelectorAll(".filter").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        filter = btn.dataset.filter;
-        render();
-    };
+  save();
+  renderList();
+  document.getElementById("habitForm").reset();
+  document.getElementById("habitTarget").value = 7;
 });
 
-document.getElementById("exportBtn").onclick = () => {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([JSON.stringify(habits, null, 2)]));
-    a.download = `habits-${today()}.json`;
-    a.click();
-};
+document.getElementById("cancelEditBtn").addEventListener("click", () => {
+  editIndex = null;
+  document.getElementById("habitForm").reset();
+  document.getElementById("habitTarget").value = 7;
+  document.getElementById("submitBtn").textContent = "+ Tambah Habit";
+  document.getElementById("cancelEditBtn").classList.add("hidden");
+});
 
-document.getElementById("importBtn").onclick = () => document.getElementById("importFile").click();
-document.getElementById("importFile").onchange = e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-        try {
-            habits = JSON.parse(ev.target.result);
-            save();
-            render();
-            alert("Import berhasil!");
-        } catch {
-            alert("File tidak valid");
-        }
-    };
-    reader.readAsText(file);
-};
+document.getElementById("habitsList").addEventListener("click", (e) => {
+  const idx = e.target.dataset.index;
+  if (idx === undefined) return;
 
-document.getElementById("resetBtn").onclick = () => {
-    if (confirm("Hapus semua data?")) {
-        habits = [];
-        save();
-        render();
+  if (e.target.classList.contains("delete-btn")) {
+    if (confirm(`Hapus "${habits[idx].name}"?`)) {
+      habits.splice(idx, 1);
+      save();
+      renderList();
     }
-};
+    return;
+  }
 
-// Start
-render();
+  if (e.target.classList.contains("edit-btn")) {
+    const h = habits[idx];
+    document.getElementById("habitInput").value = h.name;
+    document.getElementById("habitCategory").value = h.category || "Lainnya";
+    document.getElementById("habitColor").value = h.color || "blue";
+    document.getElementById("habitTarget").value = h.target || 7;
+    document.getElementById("habitChallenge").checked = !!h.challenge;
+    editIndex = Number(idx);
+    document.getElementById("submitBtn").textContent = "Simpan Perubahan";
+    document.getElementById("cancelEditBtn").classList.remove("hidden");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+
+  if (e.target.classList.contains("day-btn")) {
+    const date = e.target.dataset.date;
+    const habit = habits[idx];
+    const done = habit.completedDates.includes(date);
+
+    if (done) {
+      habit.completedDates = habit.completedDates.filter((d) => d !== date);
+      if (habit.notes) delete habit.notes[date];
+      save();
+      renderList();
+    } else {
+      pendingComplete = { index: Number(idx), date };
+      document.getElementById("modalHabitName").textContent = habit.name;
+      document.getElementById("modalDate").textContent = new Date(
+        date + "T00:00:00",
+      ).toLocaleDateString("id-ID", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      });
+      document.getElementById("noteInput").value = habit.notes?.[date] || "";
+      document.getElementById("noteModal").classList.remove("hidden");
+    }
+  }
+});
+
+// Modal
+document.getElementById("saveNoteBtn").addEventListener("click", () => {
+  if (!pendingComplete) return;
+  const { index, date } = pendingComplete;
+  const habit = habits[index];
+  if (!habit.completedDates.includes(date)) habit.completedDates.push(date);
+  if (!habit.notes) habit.notes = {};
+  const note = document.getElementById("noteInput").value.trim();
+  if (note) habit.notes[date] = note;
+  else delete habit.notes[date];
+  save();
+  renderList();
+  document.getElementById("noteModal").classList.add("hidden");
+  pendingComplete = null;
+});
+
+document.getElementById("cancelNoteBtn").addEventListener("click", () => {
+  document.getElementById("noteModal").classList.add("hidden");
+  pendingComplete = null;
+});
+
+// Filter
+document.querySelectorAll(".filter-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document
+      .querySelectorAll(".filter-btn")
+      .forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentFilter = btn.dataset.filter;
+    renderList();
+  });
+});
+
+// Tabs
+document.querySelectorAll(".tab-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document
+      .querySelectorAll(".tab-btn")
+      .forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentTab = btn.dataset.tab;
+
+    document
+      .getElementById("listView")
+      .classList.toggle("hidden", currentTab !== "list");
+    document
+      .getElementById("calendarView")
+      .classList.toggle("hidden", currentTab !== "calendar");
+    document
+      .getElementById("chartView")
+      .classList.toggle("hidden", currentTab !== "chart");
+
+    if (currentTab === "calendar") renderMonthCalendar();
+    if (currentTab === "chart") renderChart();
+  });
+});
+
+// Month navigation
+document.getElementById("prevMonth").addEventListener("click", () => {
+  currentMonth.setMonth(currentMonth.getMonth() - 1);
+  renderMonthCalendar();
+});
+document.getElementById("nextMonth").addEventListener("click", () => {
+  currentMonth.setMonth(currentMonth.getMonth() + 1);
+  renderMonthCalendar();
+});
+
+// Export / Import / Reset
+document.getElementById("exportBtn").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(habits, null, 2)], {
+    type: "application/json",
+  });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `habits-${getDateString()}.json`;
+  a.click();
+});
+
+document.getElementById("importBtn").addEventListener("click", () => {
+  document.getElementById("importFile").click();
+});
+
+document.getElementById("importFile").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      const data = JSON.parse(evt.target.result);
+      if (Array.isArray(data)) {
+        habits = data;
+        save();
+        renderList();
+        alert("Import berhasil!");
+      }
+    } catch {
+      alert("File tidak valid");
+    }
+  };
+  reader.readAsText(file);
+});
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+  if (confirm("Yakin hapus SEMUA data?")) {
+    habits = [];
+    save();
+    renderList();
+  }
+});
+
+// Notification
+document.getElementById("notifBtn").addEventListener("click", async () => {
+  if (!("Notification" in window)) {
+    alert("Browser tidak mendukung notifikasi");
+    return;
+  }
+  const permission = await Notification.requestPermission();
+  if (permission === "granted") {
+    new Notification("Habit Tracker", {
+      body: "Notifikasi berhasil diaktifkan! Kamu akan diingatkan setiap hari.",
+    });
+    localStorage.setItem("notifEnabled", "true");
+  }
+});
+
+// Simple daily reminder check
+if (
+  localStorage.getItem("notifEnabled") === "true" &&
+  "Notification" in window
+) {
+  const lastNotif = localStorage.getItem("lastNotifDate");
+  const today = getDateString();
+  if (lastNotif !== today && Notification.permission === "granted") {
+    const incomplete = habits.filter((h) => !h.completedDates.includes(today));
+    if (incomplete.length > 0) {
+      new Notification("Habit Tracker", {
+        body: `Kamu masih punya ${incomplete.length} habit yang belum dikerjakan hari ini.`,
+      });
+      localStorage.setItem("lastNotifDate", today);
+    }
+  }
+}
+
+// Init
+renderList();
